@@ -13,7 +13,7 @@ A PyTorch implementation of Convolutional Sequence Embedding Recommendation Mode
 
 # Usage
 1. Install required packages.
-2. run <code>python train_caser.py<\code>
+2. run <code>python train_caser.py</code>
 
 # Configurations
 

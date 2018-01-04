@@ -160,10 +160,11 @@ class Recommender(object):
                                                 use_cache=True)
 
                 self._optimizer.zero_grad()
-
+                # compute the binary cross-entropy loss
                 positive_loss = -torch.mean(torch.log(F.sigmoid(target_prediction)))
                 negative_loss = -torch.mean(torch.log(1 - F.sigmoid(negative_prediction)))
                 loss = positive_loss + negative_loss
+
                 epoch_loss += loss.data[0]
 
                 loss.backward()
