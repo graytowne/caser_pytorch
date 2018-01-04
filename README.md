@@ -40,3 +40,22 @@ A PyTorch implementation of Convolutional Sequence Embedding Recommendation Mode
 - <code>ac_fc</code>: activation function for fully-connected layer (i.e., phi_a in paper)
 - <code>drop_rate</code>: drop ratio when performing dropout
 
+
+# Citation
+
+If you use this Caser in your paper, please cite the paper:
+
+```
+@inproceedings{tang2018caser,
+  title={Personalized Top-N Sequential Recommendation via Convolutional Sequence Embedding},
+  author={Tang, Jiaxi and Wang, Ke},
+  booktitle={ACM International Conference on Web Search and Data Mining},
+  year={2018}
+}
+```
+
+
+
+# Acknowledgement
+
+This project (utils.py, interactions.py, etc.) is heavily build on [Spotlight](https://github.com/maciejkula/spotlight). Thanks [Maciej Kula](https://github.com/maciejkula) for his great work.
