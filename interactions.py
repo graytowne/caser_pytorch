@@ -183,12 +183,12 @@ class SequenceInteractions(object):
 
     Parameters
     ----------
-    user_ids: array of np.int64
+    user_ids: np.array
         sequence users
-    sequences: array of np.int64
+    sequences: np.array
         The interactions sequence matrix, as produced by
         :func:`~Interactions.to_sequence`
-    targets: array of np.int64
+    targets: np.array
         sequence targets
     """
 

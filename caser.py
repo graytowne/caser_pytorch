@@ -125,17 +125,19 @@ class Caser(nn.Module):
         else:
             x = self.cache_x
 
-        w2 = self.W2(item_var).squeeze()
-        b2 = self.b2(item_var).squeeze()
+        w2 = self.W2(item_var)
+        b2 = self.b2(item_var)
         if not for_pred:
             results = []
             for i in range(item_var.size(1)):
                 w2i = w2[:, i, :]
-                b2i = b2[:, i]
+                b2i = b2[:, i, 0]
                 result = (x * w2i).sum(1) + b2i
                 results.append(result)
             res = torch.stack(results, 1)
         else:
+            w2 = w2.squeeze()
+            b2 = b2.squeeze()
             res = (x * w2).sum(1) + b2
 
         return res

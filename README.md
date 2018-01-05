@@ -54,7 +54,11 @@ If you use this Caser in your paper, please cite the paper:
 }
 ```
 
+# Comments
 
+1. This PyTorch version may get better performance than what the paper reports. 
+
+   > When d=50, L=5, T=3, and set other arguments to default, after 20 epochs, mAP may get to 0.17 on test set.
 
 # Acknowledgement
 
