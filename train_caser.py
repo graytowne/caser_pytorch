@@ -120,6 +120,10 @@ class Recommender(object):
         for epoch_num in range(start_epoch, self._n_iter):
 
             t1 = time()
+
+            # set model to training model
+            self._net.train()
+
             users, sequences, targets = shuffle(users,
                                                 sequences,
                                                 targets)
@@ -249,7 +253,9 @@ class Recommender(object):
         if self.test_sequence is None:
             raise ValueError('Missing test sequences, cannot make predictions')
 
-        self._net.train(False)
+        # set model to evaluation model
+        self._net.eval()
+
         sequence = self.test_sequence.sequences[user_id, :]
         sequence = np.atleast_2d(sequence)
 
