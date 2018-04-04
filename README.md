@@ -1,7 +1,7 @@
 
 # Caser-PyTorch
 
-A PyTorch implementation of Convolutional Sequence Embedding Recommendation Model (Caser) from paper:
+A PyTorch implementation of Convolutional Sequence Embedding Recommendation Model (Caser) from the paper:
 
 *Personalized Top-N Sequential Recommendation via Convolutional Sequence Embedding, Jiaxi Tang and Ke Wang , WSDM '18*
 
@@ -19,15 +19,15 @@ A PyTorch implementation of Convolutional Sequence Embedding Recommendation Mode
 
 #### Data
 
-- Datasets are organized in 2 seperate files: **_train.txt_** and **_test.txt_**
+- Datasets are organized into 2 separate files: **_train.txt_** and **_test.txt_**
 
-- Same to other data format for recommendation, each file contains a collection of triplets:
+- Same to other data format for the recommendation, each file contains a collection of triplets:
 
-  > user item rating
+  > user-item rating
 
   The only difference is the triplets are organized in *time order*.
 
-- As the problem is Sequential Reommendation, the rating doesn't matter, so I convert them to all 1.
+- As the problem is Sequential Recommendation, the rating doesn't matter, so I convert them to all 1.
 
 #### Model Args (in train_caser.py)
 
@@ -48,7 +48,7 @@ If you use this Caser in your paper, please cite the paper:
 ```
 @inproceedings{tang2018caser,
   title={Personalized Top-N Sequential Recommendation via Convolutional Sequence Embedding},
-  author={Tang, Jiaxi and Wang, Ke},
+  author={Tang, Jiaxi, and Wang, Ke},
   booktitle={ACM International Conference on Web Search and Data Mining},
   year={2018}
 }
@@ -58,8 +58,8 @@ If you use this Caser in your paper, please cite the paper:
 
 1. This PyTorch version may get better performance than what the paper reports. 
 
-   > When d=50, L=5, T=3, and set other arguments to default, after 20 epochs, mAP may get to 0.17 on test set.
+   > When d=50, L=5, T=3, and set other arguments to default, after 20 epochs, mAP may get to 0.17 on the test set.
 
-# Acknowledgement
+# Acknowledgment
 
-This project (utils.py, interactions.py, etc.) is heavily build on [Spotlight](https://github.com/maciejkula/spotlight). Thanks [Maciej Kula](https://github.com/maciejkula) for his great work.
+This project (utils.py, interactions.py, etc.) is heavily built on [Spotlight](https://github.com/maciejkula/spotlight). Thanks [Maciej Kula](https://github.com/maciejkula) for his great work.
