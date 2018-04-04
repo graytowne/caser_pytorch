@@ -21,7 +21,7 @@ A PyTorch implementation of Convolutional Sequence Embedding Recommendation Mode
 
 - Datasets are organized into 2 separate files: **_train.txt_** and **_test.txt_**
 
-- Same to other data format for the recommendation, each file contains a collection of triplets:
+- Same to other data format for recommendation, each file contains a collection of triplets:
 
   > user-item rating
 
@@ -48,7 +48,7 @@ If you use this Caser in your paper, please cite the paper:
 ```
 @inproceedings{tang2018caser,
   title={Personalized Top-N Sequential Recommendation via Convolutional Sequence Embedding},
-  author={Tang, Jiaxi, and Wang, Ke},
+  author={Tang, Jiaxi and Wang, Ke},
   booktitle={ACM International Conference on Web Search and Data Mining},
   year={2018}
 }
