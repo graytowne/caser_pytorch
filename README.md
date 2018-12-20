@@ -7,7 +7,7 @@ A PyTorch implementation of Convolutional Sequence Embedding Recommendation Mode
 
 # Requirements
 * Python 2 or 3
-* [PyTorch v0.2+](https://github.com/pytorch/pytorch)
+* [PyTorch v0.4+](https://github.com/pytorch/pytorch)
 * Numpy
 * SciPy
 
