@@ -100,8 +100,8 @@ class Caser(nn.Module):
         out_hs = list()
         if self.n_h:
             for conv in self.conv_h:
-                conv_out = self.ac_conv(conv(item_embs).squeeze())
-                pool_out = F.max_pool1d(conv_out, conv_out.size(2)).squeeze()
+                conv_out = self.ac_conv(conv(item_embs).squeeze(3))
+                pool_out = F.max_pool1d(conv_out, conv_out.size(2)).squeeze(2)
                 out_hs.append(pool_out)
             out_h = torch.cat(out_hs, 1)  # prepare for fully connect
 
