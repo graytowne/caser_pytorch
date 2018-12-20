@@ -60,7 +60,7 @@ class Recommender(object):
         self._learning_rate = learning_rate
         self._l2 = l2
         self._neg_samples = neg_samples
-        self._use_cuda = use_cuda
+        self._device = torch.device("cuda" if use_cuda else "cpu")
 
         # rank evaluation related
         self.test_sequence = None
@@ -76,14 +76,13 @@ class Recommender(object):
 
         self.test_sequence = interactions.test_sequences
 
-        self._net = gpu(Caser(self._num_users,
-                              self._num_items,
-                              self.model_args), self._use_cuda)
+        self._net = Caser(self._num_users,
+                          self._num_items,
+                          self.model_args).to(self._device)
 
-        self._optimizer = optim.Adam(
-            self._net.parameters(),
-            weight_decay=self._l2,
-            lr=self._learning_rate)
+        self._optimizer = optim.Adam(self._net.parameters(),
+                                     weight_decay=self._l2,
+                                     lr=self._learning_rate)
 
     def fit(self, train, test, verbose=False):
         """
@@ -121,7 +120,7 @@ class Recommender(object):
 
             t1 = time()
 
-            # set model to training model
+            # set model to training mode
             self._net.train()
 
             users, sequences, targets = shuffle(users,
@@ -130,46 +129,41 @@ class Recommender(object):
 
             negative_samples = self._generate_negative_samples(users, train, n=self._neg_samples * T)
 
-            sequences_tensor = gpu(torch.from_numpy(sequences),
-                                   self._use_cuda)
-            user_tensor = gpu(torch.from_numpy(users),
-                              self._use_cuda)
-            item_target_tensor = gpu(torch.from_numpy(targets),
-                                     self._use_cuda)
-            item_negative_tensor = gpu(torch.from_numpy(negative_samples),
-                                       self._use_cuda)
+            sequences_tensor = torch.from_numpy(sequences).to(self._device)
+            user_tensor = torch.from_numpy(users).to(self._device)
+            item_target_tensor = torch.from_numpy(targets).to(self._device)
+            item_negative_tensor = torch.from_numpy(negative_samples).to(self._device)
 
             epoch_loss = 0.0
 
-            for minibatch_num, \
-                (batch_sequence,
-                 batch_user,
-                 batch_target,
-                 batch_negative) in enumerate(minibatch(sequences_tensor,
-                                                        user_tensor,
-                                                        item_target_tensor,
-                                                        item_negative_tensor,
-                                                        batch_size=self._batch_size)):
-                sequence_var = Variable(batch_sequence)
-                user_var = Variable(batch_user)
-                item_target_var = Variable(batch_target)
-                item_negative_var = Variable(batch_negative)
+            for (minibatch_num,
+                 (batch_sequences,
+                  batch_users,
+                  batch_targets,
+                  batch_negatives)) in enumerate(minibatch(sequences_tensor,
+                                                           user_tensor,
+                                                           item_target_tensor,
+                                                           item_negative_tensor,
+                                                           batch_size=self._batch_size)):
+                items_to_predict = torch.cat((batch_targets, batch_negatives), 1)
+                items_prediction = self._net(batch_sequences,
+                                             batch_users,
+                                             items_to_predict)
 
-                target_prediction = self._net(sequence_var,
-                                              user_var,
-                                              item_target_var)
-                negative_prediction = self._net(sequence_var,
-                                                user_var,
-                                                item_negative_var,
-                                                use_cache=True)
+                (targets_prediction,
+                 negatives_prediction) = torch.split(items_prediction,
+                                                     [batch_targets.size(1),
+                                                      batch_negatives.size(1)], dim=1)
 
                 self._optimizer.zero_grad()
                 # compute the binary cross-entropy loss
-                positive_loss = -torch.mean(torch.log(F.sigmoid(target_prediction)))
-                negative_loss = -torch.mean(torch.log(1 - F.sigmoid(negative_prediction)))
+                positive_loss = -torch.mean(
+                    torch.log(torch.sigmoid(targets_prediction)))
+                negative_loss = -torch.mean(
+                    torch.log(1 - torch.sigmoid(negatives_prediction)))
                 loss = positive_loss + negative_loss
 
-                epoch_loss += loss.data[0]
+                epoch_loss += loss.item()
 
                 loss.backward()
                 self._optimizer.step()
@@ -255,27 +249,26 @@ class Recommender(object):
 
         # set model to evaluation model
         self._net.eval()
+        with torch.no_grad():
+            sequence = self.test_sequence.sequences[user_id, :]
+            sequence = np.atleast_2d(sequence)
 
-        sequence = self.test_sequence.sequences[user_id, :]
-        sequence = np.atleast_2d(sequence)
+            if item_ids is None:
+                item_ids = np.arange(self._num_items).reshape(-1, 1)
 
-        if item_ids is None:
-            item_ids = np.arange(self._num_items).reshape(-1, 1)
+            sequences_tensor = torch.from_numpy(
+                sequence.astype(np.int64).reshape(1, -1)).to(self._device)
+            user_tensor = torch.from_numpy(
+                item_ids.astype(np.int64)).to(self._device)
+            items_tensor = torch.from_numpy(
+                np.array([[user_id]]).astype(np.int64)).to(self._device)
 
-        sequences = torch.from_numpy(sequence.astype(np.int64).reshape(1, -1))
-        item_ids = torch.from_numpy(item_ids.astype(np.int64))
-        user_id = torch.from_numpy(np.array([[user_id]]).astype(np.int64))
+            out = self._net(sequences_tensor,
+                            user_tensor,
+                            items_tensor,
+                            for_pred=True)
 
-        sequence_var = Variable(gpu(sequences, self._use_cuda))
-        item_var = Variable(gpu(item_ids, self._use_cuda))
-        user_var = Variable(gpu(user_id, self._use_cuda))
-
-        out = self._net(sequence_var,
-                        user_var,
-                        item_var,
-                        for_pred=True)
-
-        return cpu(out.data).numpy().flatten()
+        return out.cpu().numpy().flatten()
 
 
 if __name__ == '__main__':
@@ -292,7 +285,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', type=float, default=1e-3)
     parser.add_argument('--l2', type=float, default=1e-6)
     parser.add_argument('--neg_samples', type=int, default=3)
-    parser.add_argument('--use_cuda', type=str2bool, default=True)
+    parser.add_argument('--use_cuda', type=str2bool, default=False)
 
     config = parser.parse_args()
 

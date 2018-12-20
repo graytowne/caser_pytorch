@@ -67,77 +67,61 @@ class Caser(nn.Module):
 
         self.cache_x = None
 
-    def forward(self, seq_var, user_var, item_var, use_cache=False, for_pred=False):
+    def forward(self, seq_var, user_var, item_var, for_pred=False):
         """
         The forward propagation used to get recommendation scores, given
-        triplet (user, sequence, targets). Note that we can cache 'x' to
-        save computation for negative predictions. Because when computing
-        negatives, the (user, sequence) are the same, thus 'x' will be the
-        same as well.
+        triplet (user, sequence, targets).
 
         Parameters
         ----------
 
-        seq_var: torch.autograd.Variable
+        seq_var: torch.FloatTensor with size [batch_size, max_sequence_length]
             a batch of sequence
-        user_var: torch.autograd.Variable
+        user_var: torch.LongTensor with size [batch_size]
             a batch of user
-        item_var: torch.autograd.Variable
+        item_var: torch.LongTensor with size [batch_size]
             a batch of items
-        use_cache: boolean, optional
-            Use cache of x. Set to True when computing negatives.
         for_pred: boolean, optional
             Train or Prediction. Set to True when evaluation.
         """
 
-        if not use_cache:
-            # Embedding Look-up
-            item_embs = self.item_embeddings(seq_var).unsqueeze(1)  # use unsqueeze() to get 4-D
-            user_emb = self.user_embeddings(user_var).squeeze(1)
+        # Embedding Look-up
+        item_embs = self.item_embeddings(seq_var).unsqueeze(1)  # use unsqueeze() to get 4-D
+        user_emb = self.user_embeddings(user_var).squeeze(1)
 
-            # Convolutional Layers
-            out, out_h, out_v = None, None, None
-            # vertical conv layer
-            if self.n_v:
-                out_v = self.conv_v(item_embs).squeeze(2)
-                out_v = out_v.view(-1, self.fc1_dim_v)  # prepare for fully connect
+        # Convolutional Layers
+        out, out_h, out_v = None, None, None
+        # vertical conv layer
+        if self.n_v:
+            out_v = self.conv_v(item_embs)
+            out_v = out_v.view(-1, self.fc1_dim_v)  # prepare for fully connect
 
-            # horizontal conv layer
-            out_hs = list()
-            if self.n_h:
-                for conv in self.conv_h:
-                    conv_out = self.ac_conv(conv(item_embs).squeeze(3))
-                    pool_out = F.max_pool1d(conv_out, conv_out.size(2)).squeeze(2)
-                    out_hs.append(pool_out)
-                out_h = torch.cat(out_hs, 1)  # prepare for fully connect
+        # horizontal conv layer
+        out_hs = list()
+        if self.n_h:
+            for conv in self.conv_h:
+                conv_out = self.ac_conv(conv(item_embs).squeeze())
+                pool_out = F.max_pool1d(conv_out, conv_out.size(2)).squeeze()
+                out_hs.append(pool_out)
+            out_h = torch.cat(out_hs, 1)  # prepare for fully connect
 
-            # Fully-connected Layers
-            out = torch.cat([out_v, out_h], 1)
-            # apply dropout
-            out = self.dropout(out)
+        # Fully-connected Layers
+        out = torch.cat([out_v, out_h], 1)
+        # apply dropout
+        out = self.dropout(out)
 
-            # fully-connected layer
-            z = self.ac_fc(self.fc1(out))
-            x = torch.cat([z, user_emb], 1)
-
-            self.cache_x = x
-
-        else:
-            x = self.cache_x
+        # fully-connected layer
+        z = self.ac_fc(self.fc1(out))
+        x = torch.cat([z, user_emb], 1)
 
         w2 = self.W2(item_var)
         b2 = self.b2(item_var)
-        if not for_pred:
-            results = []
-            for i in range(item_var.size(1)):
-                w2i = w2[:, i, :]
-                b2i = b2[:, i, 0]
-                result = (x * w2i).sum(1) + b2i
-                results.append(result)
-            res = torch.stack(results, 1)
-        else:
+
+        if for_pred:
             w2 = w2.squeeze()
             b2 = b2.squeeze()
             res = (x * w2).sum(1) + b2
+        else:
+            res = torch.baddbmm(b2, w2, x.unsqueeze(2)).squeeze()
 
         return res

@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 import random
 
-activation_getter = {'iden': lambda x: x, 'relu': F.relu, 'tanh': F.tanh, 'sigm': F.sigmoid}
+activation_getter = {'iden': lambda x: x, 'relu': F.relu, 'tanh': torch.tanh, 'sigm': torch.sigmoid}
 
 
 def gpu(tensor, gpu=False):
