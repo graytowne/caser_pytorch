@@ -23,7 +23,7 @@ A PyTorch implementation of Convolutional Sequence Embedding Recommendation Mode
 
 - Same to other data format for recommendation, each file contains a collection of triplets:
 
-  > user-item rating
+  > user item rating
 
   The only difference is the triplets are organized in *time order*.
 
