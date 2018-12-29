@@ -214,7 +214,9 @@ def _sliding_window(tensor, window_size, step_size=1):
             else:
                 break
     else:
-        yield tensor
+        num_paddings = window_size - len(tensor)
+        # Pad sequence with 0s if it is shorter than windows size.
+        yield np.pad(tensor, (num_paddings, 0), 'constant')
 
 
 def _generate_sequences(user_ids, item_ids,
